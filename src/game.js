@@ -20,6 +20,9 @@ import { Position, Enemy, Tower, Renderable, Slow, Poison } from './components.j
 import mapData from './data/map.json';
 import wavesData from './data/waves.json';
 
+import { getTowerBaseTexture, getTowerTurretTexture } from './rendering/textures.js';
+import { drawGlow } from './rendering/effects.js';
+
 import { buildWaypoints } from './systems/pathSystem.js';
 import { updateMovement } from './systems/movementSystem.js';
 import { updateTowers } from './systems/combatSystem.js';
@@ -792,19 +795,28 @@ export class Game {
     this._blinkAndRemove(sprite);
   }
 
+  /** Disolución al morir: el sprite se desvanece, encoge y flota mientras suelta partículas. */
   _blinkAndRemove(sprite) {
     if (!sprite) return;
-    let blinks = 0;
-    const totalBlinks = 6;
-    const interval = setInterval(() => {
-      sprite.visible = !sprite.visible;
-      blinks += 1;
-      if (blinks >= totalBlinks) {
-        clearInterval(interval);
+    const duration = 380;
+    const start = performance.now();
+    const startScale = sprite.scale.x;
+    const startY = sprite.y;
+
+    const step = () => {
+      const t = Math.min(1, (performance.now() - start) / duration);
+      sprite.alpha = 1 - t;
+      sprite.scale.set(startScale * (1 - t * 0.4));
+      sprite.y = startY - t * 14;
+      sprite.rotation = t * 0.5;
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
         sprite.parent?.removeChild(sprite);
         sprite.destroy?.();
       }
-    }, 60);
+    };
+    requestAnimationFrame(step);
   }
 
   // ─────────────────────────────────────────── Construcción ───────────────────────────────────────────
@@ -936,32 +948,34 @@ export class Game {
   _applyTowerVisualLevel(eid) {
     const sprite = Renderable.sprite[eid];
     const level = Tower.level[eid];
-    const scale = level === 1 ? 1 : level === 2 ? 1.12 : 1.28;
-    sprite.base.scale.set(scale);
-    sprite.turret.scale.set(scale, sprite.turret.scale.y);
+    const towerTypeName = TOWER_TYPE_BY_ID[Tower.towerType[eid]];
+    const specId = Tower.specialization[eid];
+    const specKey = specId === 1 ? 'spec1' : specId === 2 ? 'spec2' : null;
+    const variant = specKey ?? level;
 
-    if (Tower.specialization[eid]) {
+    sprite.base.texture = getTowerBaseTexture(towerTypeName, variant);
+    sprite.turret.texture = getTowerTurretTexture(towerTypeName, specKey);
+    sprite.levelScale = level === 1 ? 1 : level === 2 ? 1.1 : 1.2;
+    sprite.spinTurret = towerTypeName === 'ICE' && specKey === 'spec2';
+    const TURRET_Y_BY_VARIANT = { 1: -30, 2: -40, 3: -52, spec1: -80, spec2: -56 };
+    sprite.turretOffsetY = TURRET_Y_BY_VARIANT[variant] ?? -30;
+
+    drawGlow(sprite.glow, sprite.glowColor, 40 + level * 8 + (specKey ? 16 : 0));
+
+    if (specKey) {
       if (!sprite.specIcon) {
         const icon = new PIXI.Text('', { fontFamily: FONT, fontSize: 20 });
         icon.anchor.set(0.5);
-        icon.y = -48;
+        icon.y = -70;
         sprite.addChild(icon);
         sprite.specIcon = icon;
       }
-      const towerTypeName = TOWER_TYPE_BY_ID[Tower.towerType[eid]];
-      const spec = getSpecialization(towerTypeName, Tower.specialization[eid]);
+      const spec = getSpecialization(towerTypeName, specId);
       sprite.specIcon.text = spec?.icon ?? '';
-
-      sprite.turret.clear();
-      sprite.turret.beginFill(TOWER_TYPES[towerTypeName].color);
-      sprite.turret.drawCircle(0, 0, 18);
-      sprite.turret.endFill();
-      sprite.turret.lineStyle(3, COLORS.UI_PANEL_BORDER, 1);
-      sprite.turret.drawCircle(0, 0, 18);
     } else if (level >= 3 && !sprite.starIcon) {
       const star = new PIXI.Text('★', { fontFamily: FONT, fontSize: 16, fill: COLORS.GOLD });
       star.anchor.set(0.5);
-      star.y = -46;
+      star.y = -66;
       sprite.addChild(star);
       sprite.starIcon = star;
     }

@@ -16,9 +16,19 @@ import {
   ENEMY_TYPE_IDS,
   TOWER_TYPES,
   TOWER_TYPE_IDS,
+  TOWER_TYPE_BY_ID,
   GRID_SIZE,
   COLORS,
 } from './constants.js';
+import {
+  getEnemyFrames,
+  getTowerBaseTexture,
+  getTowerTurretTexture,
+  getTowerBarrelTexture,
+  getProjectileTexture,
+  TOWER_BASE_ANCHOR,
+} from './rendering/textures.js';
+import { drawShadow, drawGlow } from './rendering/effects.js';
 
 /**
  * Crea un enemigo en el waypoint de inicio del camino.
@@ -65,22 +75,34 @@ export function createEnemy(world, type, startPos, layer, options = {}) {
   container.x = startPos.x;
   container.y = startPos.y;
 
-  const body = new PIXI.Graphics();
-  body.beginFill(0xffffff);
-  body.drawCircle(0, 0, stats.radius);
-  body.endFill();
-  body.lineStyle(2, 0x000000, 0.35);
-  body.drawCircle(0, 0, stats.radius);
-  body.tint = stats.color;
+  const shadow = new PIXI.Graphics();
+  drawShadow(shadow, { rx: stats.radius * 0.9, ry: stats.radius * 0.35, yOffset: stats.radius * 0.75, alpha: 0.3 });
+  container.addChild(shadow);
+
+  const frostOverlay = new PIXI.Graphics();
+  frostOverlay.beginFill(0xbde9ff, 0.45);
+  frostOverlay.drawCircle(0, 0, stats.radius * 1.05);
+  frostOverlay.endFill();
+  frostOverlay.visible = false;
+  container.frost = frostOverlay;
+
+  const frames = getEnemyFrames(type);
+  const body = new PIXI.Sprite(frames[1]);
+  body.anchor.set(0.5);
+  body.width = stats.radius * 2.2;
+  body.height = stats.radius * 2.2;
   container.addChild(body);
+  container.addChild(frostOverlay);
 
   const barWidth = stats.radius * 2;
-  const barY = -stats.radius - 12;
+  const barY = -stats.radius - 14;
 
   const healthBarBg = new PIXI.Graphics();
-  healthBarBg.beginFill(0x4a0000);
-  healthBarBg.drawRect(-barWidth / 2, barY, barWidth, 5);
+  healthBarBg.beginFill(0x2a1608);
+  healthBarBg.drawRect(-barWidth / 2 - 1, barY - 1, barWidth + 2, 7);
   healthBarBg.endFill();
+  healthBarBg.lineStyle(1, COLORS.UI_PANEL_BORDER, 0.9);
+  healthBarBg.drawRect(-barWidth / 2 - 1, barY - 1, barWidth + 2, 7);
   container.addChild(healthBarBg);
 
   const healthBarFill = new PIXI.Graphics();
@@ -94,6 +116,10 @@ export function createEnemy(world, type, startPos, layer, options = {}) {
   container.barWidth = barWidth;
   container.baseColor = stats.color;
   container.radius = stats.radius;
+  container.walkFrames = frames;
+  container.enemyTypeName = type;
+  container.lastHealth = hp;
+  container.flashTimer = 0;
 
   layer.addChild(container);
 
@@ -142,24 +168,26 @@ export function createTower(world, gridX, gridY, towerType, layer) {
   container.x = worldX;
   container.y = worldY;
 
-  const base = new PIXI.Graphics();
-  base.beginFill(0x3e2723);
-  base.drawRoundedRect(-24, -24, 48, 48, 6);
-  base.endFill();
+  const shadow = new PIXI.Graphics();
+  drawShadow(shadow, { rx: 20, ry: 7, yOffset: 20, alpha: 0.32 });
+  container.addChild(shadow);
+
+  const glow = new PIXI.Graphics();
+  drawGlow(glow, stats.color, 46);
+  container.addChild(glow);
+
+  const base = new PIXI.Sprite(getTowerBaseTexture(towerType, 1));
+  base.anchor.set(TOWER_BASE_ANCHOR.x, TOWER_BASE_ANCHOR.y);
   container.addChild(base);
 
-  const turret = new PIXI.Graphics();
-  turret.beginFill(stats.color);
-  turret.drawCircle(0, 0, 18);
-  turret.endFill();
-  turret.lineStyle(3, 0xffffff, 0.4);
-  turret.drawCircle(0, 0, 18);
+  const turret = new PIXI.Sprite(getTowerTurretTexture(towerType, null));
+  turret.anchor.set(0.5);
+  turret.y = -30;
   container.addChild(turret);
 
-  const barrel = new PIXI.Graphics();
-  barrel.beginFill(0x212121);
-  barrel.drawRect(-4, -26, 8, 14);
-  barrel.endFill();
+  const barrel = new PIXI.Sprite(getTowerBarrelTexture(towerType));
+  barrel.anchor.set(0.5, 1);
+  barrel.y = -30;
   container.addChild(barrel);
 
   const rangeIndicator = new PIXI.Graphics();
@@ -171,9 +199,16 @@ export function createTower(world, gridX, gridY, towerType, layer) {
   container.base = base;
   container.turret = turret;
   container.barrel = barrel;
+  container.shadow = shadow;
+  container.glow = glow;
+  container.glowColor = stats.color;
+  container.glowLevel = 1;
   container.rangeIndicator = rangeIndicator;
   container.idlePhase = Math.random() * Math.PI * 2;
   container.recoilTimer = 0;
+  container.buildTimer = 0.45; // animación de construcción (Fase 4)
+  container.scale.set(0.3);
+  container.alpha = 0;
 
   layer.addChild(container);
 
@@ -187,19 +222,29 @@ export function createTower(world, gridX, gridY, towerType, layer) {
   return eid;
 }
 
-// Pool de gráficos de proyectil reutilizables: evita crear/destruir
-// objetos PIXI en cada disparo (Fase 9, optimización de rendimiento).
-const projectileSpritePool = [];
+// Pool de visuales de proyectil reutilizables (contenedor con estela +
+// sprite de cabeza pixel art): evita crear/destruir objetos PIXI en cada
+// disparo (Fase 7, optimización de rendimiento).
+const projectileVisualPool = [];
 
-function acquireProjectileGraphics() {
-  return projectileSpritePool.pop() ?? new PIXI.Graphics();
+function acquireProjectileVisual() {
+  const existing = projectileVisualPool.pop();
+  if (existing) return existing;
+
+  const container = new PIXI.Container();
+  const trail = new PIXI.Graphics();
+  const head = new PIXI.Sprite();
+  head.anchor.set(0.5);
+  container.addChild(trail, head);
+  container.trail = trail;
+  container.head = head;
+  return container;
 }
 
-export function releaseProjectileGraphics(graphics) {
-  graphics.clear();
-  graphics.visible = false;
-  if (graphics.parent) graphics.parent.removeChild(graphics);
-  projectileSpritePool.push(graphics);
+export function releaseProjectileGraphics(container) {
+  container.visible = false;
+  if (container.parent) container.parent.removeChild(container);
+  projectileVisualPool.push(container);
 }
 
 /**
@@ -231,23 +276,22 @@ export function createProjectile(world, fromX, fromY, targetX, targetY, damage, 
   Projectile.fromTowerType[eid] = options.towerType ?? 0;
 
   const color = options.projectileColor ?? 0xffffff;
-  const graphics = acquireProjectileGraphics();
-  graphics.beginFill(color, 0.55);
-  graphics.drawPolygon([-14, -2, -4, 0, -14, 2]);
-  graphics.endFill();
-  graphics.beginFill(0xffffff);
-  graphics.drawCircle(0, 0, 6);
-  graphics.endFill();
-  graphics.lineStyle(1, color, 0.8);
-  graphics.drawCircle(0, 0, 6);
-  graphics.visible = true;
-  graphics.rotation = 0;
-  graphics.x = fromX;
-  graphics.y = fromY;
-  layer.addChild(graphics);
+  const towerTypeName = TOWER_TYPE_BY_ID[options.towerType ?? 0];
+
+  const container = acquireProjectileVisual();
+  container.trail.clear();
+  container.trail.beginFill(color, 0.5);
+  container.trail.drawPolygon([-14, -2, -4, 0, -14, 2]);
+  container.trail.endFill();
+  container.head.texture = getProjectileTexture(towerTypeName);
+  container.visible = true;
+  container.rotation = 0;
+  container.x = fromX;
+  container.y = fromY;
+  layer.addChild(container);
 
   addComponent(world, eid, Renderable);
-  Renderable.sprite[eid] = graphics;
+  Renderable.sprite[eid] = container;
   Renderable.width[eid] = 12;
   Renderable.height[eid] = 12;
   Renderable.tint[eid] = color;
