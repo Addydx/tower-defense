@@ -644,3 +644,47 @@ export function getUiIconTexture(kind) {
     throw new Error(`Icono desconocido: ${kind}`);
   });
 }
+
+// ─────────────────────────────────────────── PANELES DE UI (Fase 3) ───────────────────────────────────────────
+// Tiles pequeños pensados para rellenar paneles con PIXI.TilingSprite:
+// madera tallada, piedra con musgo y pergamino.
+
+function buildWoodPanelTile() {
+  const pc = new PixelCanvas(16, 16, 1);
+  pc.px(0, 0, 16, 16, PALETTE.brownMid);
+  for (let y = 1; y < 16; y += 3) pc.px(0, y, 16, 1, PALETTE.brownDark);
+  for (let y = 2; y < 16; y += 3) pc.px(0, y, 16, 1, PALETTE.brownLight);
+  pc.dot(4, 6, PALETTE.brownDark);
+  pc.dot(11, 10, PALETTE.brownDark);
+  return pc.toTexture();
+}
+
+function buildStonePanelTile() {
+  const pc = new PixelCanvas(16, 16, 1);
+  pc.px(0, 0, 16, 16, PALETTE.gray);
+  pc.px(0, 0, 16, 1, '#5a5a5a');
+  pc.px(0, 8, 16, 1, '#5a5a5a');
+  pc.px(0, 0, 1, 16, '#5a5a5a');
+  pc.px(8, 8, 1, 8, '#5a5a5a');
+  pc.px(0, 8, 8, 1, '#5a5a5a');
+  pc.dot(2, 3, PALETTE.greenMid);
+  pc.dot(13, 12, PALETTE.greenDark);
+  return pc.toTexture();
+}
+
+function buildParchmentPanelTile() {
+  const pc = new PixelCanvas(16, 16, 1);
+  pc.px(0, 0, 16, 16, PALETTE.beige);
+  const rng = mulberry32(55);
+  for (let i = 0; i < 8; i++) pc.dot(Math.floor(rng() * 16), Math.floor(rng() * 16), '#b28c5c');
+  return pc.toTexture();
+}
+
+export function getPanelTileTexture(theme) {
+  return cached(`panelTile:${theme}`, () => {
+    if (theme === 'wood') return buildWoodPanelTile();
+    if (theme === 'stone') return buildStonePanelTile();
+    if (theme === 'parchment') return buildParchmentPanelTile();
+    throw new Error(`Tema de panel desconocido: ${theme}`);
+  });
+}

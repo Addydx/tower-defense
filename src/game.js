@@ -23,6 +23,8 @@ import wavesData from './data/waves.json';
 import { getTowerBaseTexture, getTowerTurretTexture } from './rendering/textures.js';
 import { drawGlow } from './rendering/effects.js';
 import { buildMapVisuals } from './rendering/mapRenderer.js';
+import { makePixelPanel, makePixelButton, makeIcon, makeStatBar } from './rendering/uiRenderer.js';
+import { PALETTE } from './rendering/palette.js';
 
 import { buildWaypoints } from './systems/pathSystem.js';
 import { updateMovement } from './systems/movementSystem.js';
@@ -140,18 +142,30 @@ export class Game {
   _setupUI() {
     const shadow = { dropShadow: true, dropShadowColor: 0x000000, dropShadowDistance: 2, dropShadowAlpha: 0.8 };
 
-    this.goldText = new PIXI.Text('🪙 Oro: 300', {
+    this.hudPanel = this._makePanel(GAME_WIDTH, 46, 'wood');
+    this.hudPanel.x = 0;
+    this.hudPanel.y = 0;
+    this.hudPanel.eventMode = 'none';
+    this.uiLayer.addChild(this.hudPanel);
+
+    this.goldIcon = makeIcon('coin', 24);
+    this.goldIcon.x = 14;
+    this.goldIcon.y = 11;
+    this.uiLayer.addChild(this.goldIcon);
+
+    this.goldText = new PIXI.Text('300', {
       fontFamily: FONT,
       fontSize: 22,
       fontWeight: 'bold',
       fill: COLORS.GOLD,
       ...shadow,
     });
-    this.goldText.x = 16;
+    this.goldText.x = 44;
     this.goldText.y = 12;
     this.uiLayer.addChild(this.goldText);
+    this._displayedGold = STARTING_GOLD;
 
-    this.livesText = new PIXI.Text('❤️ Vidas: 20', {
+    this.livesText = new PIXI.Text('20', {
       fontFamily: FONT,
       fontSize: 22,
       fontWeight: 'bold',
@@ -159,9 +173,15 @@ export class Game {
       ...shadow,
     });
     this.livesText.anchor.set(1, 0);
-    this.livesText.x = GAME_WIDTH - 16;
+    this.livesText.x = GAME_WIDTH - 40;
     this.livesText.y = 12;
     this.uiLayer.addChild(this.livesText);
+
+    this.heartIcon = makeIcon('heart', 24);
+    this.heartIcon.x = GAME_WIDTH - 32;
+    this.heartIcon.y = 11;
+    this.uiLayer.addChild(this.heartIcon);
+    this._displayedLives = STARTING_LIVES;
 
     this.waveText = new PIXI.Text('Oleada 0 / 10', {
       fontFamily: FONT,
@@ -228,76 +248,23 @@ export class Game {
 
   // ─────────────────────────────────────────── Menús (PixiJS) ───────────────────────────────────────────
 
+  /** Botón pixel art (madera/piedra) — `opts.fill` colorea el marco, igual que antes hacía con el relleno. */
   _makeButton(label, width, height, onClick, opts = {}) {
-    const container = new PIXI.Container();
-    const fillColor = opts.fill ?? 0x2e6ea6;
-    const hoverColor = opts.hoverFill ?? 0x3f8ed6;
-    const disabledColor = 0x4a4a4a;
-
-    const bg = new PIXI.Graphics();
-    const draw = (color) => {
-      bg.clear();
-      bg.beginFill(color);
-      bg.drawRoundedRect(0, 0, width, height, 10);
-      bg.endFill();
-      bg.lineStyle(2, COLORS.UI_PANEL_BORDER, 0.8);
-      bg.drawRoundedRect(0, 0, width, height, 10);
-    };
-    draw(fillColor);
-    container.addChild(bg);
-
-    const text = new PIXI.Text(label, {
-      fontFamily: FONT,
-      fontSize: Math.min(18, height * 0.4),
-      fontWeight: 'bold',
-      fill: COLORS.TEXT_LIGHT,
-      align: 'center',
-    });
-    text.anchor.set(0.5);
-    text.x = width / 2;
-    text.y = height / 2;
-    container.addChild(text);
-
-    container.eventMode = 'static';
-    container.cursor = 'pointer';
-    container.hitArea = new PIXI.Rectangle(0, 0, width, height);
-
-    container.setEnabled = (enabled) => {
-      container.eventMode = enabled ? 'static' : 'none';
-      container.cursor = enabled ? 'pointer' : 'default';
-      draw(enabled ? fillColor : disabledColor);
-      container.alpha = enabled ? 1 : 0.55;
-    };
-
-    container.on('pointerover', () => {
-      if (container.eventMode === 'static') draw(hoverColor);
-    });
-    container.on('pointerout', () => {
-      if (container.eventMode === 'static') draw(fillColor);
-    });
-    container.on('pointerdown', (e) => {
-      e.stopPropagation();
-      this.sound.unlock();
-      this.sound.playClick();
-      onClick();
-    });
-
-    return container;
+    return makePixelButton(
+      label,
+      width,
+      height,
+      () => {
+        this.sound.unlock();
+        this.sound.playClick();
+        onClick();
+      },
+      { accent: opts.fill, theme: opts.theme }
+    );
   }
 
-  _makePanel(width, height) {
-    const panel = new PIXI.Container();
-    const bg = new PIXI.Graphics();
-    bg.beginFill(COLORS.UI_PANEL, 0.96);
-    bg.drawRoundedRect(0, 0, width, height, 12);
-    bg.endFill();
-    bg.lineStyle(3, COLORS.UI_PANEL_BORDER, 1);
-    bg.drawRoundedRect(0, 0, width, height, 12);
-    panel.addChild(bg);
-    panel.hitArea = new PIXI.Rectangle(0, 0, width, height);
-    panel.eventMode = 'static';
-    panel.on('pointerdown', (e) => e.stopPropagation());
-    return panel;
+  _makePanel(width, height, theme = 'stone') {
+    return makePixelPanel(width, height, theme);
   }
 
   _buildMenus() {
@@ -728,8 +695,7 @@ export class Game {
   }
 
   _refreshWaveButtonLabel() {
-    const label = this.waveButton.children[1];
-    label.text = `⚔️ INICIAR OLEADA ${this.currentWave + 1}`;
+    this.waveButton.labelText.text = `⚔️ INICIAR OLEADA ${this.currentWave + 1}`;
   }
 
   _showBanner(text) {
@@ -987,7 +953,8 @@ export class Game {
     const spec = getSpecialization(towerTypeName, specId);
 
     const panelWidth = 260;
-    const panelHeight = spec || level >= 3 ? 260 : 230;
+    // +40 respecto al original: las barras de estadísticas ocupan más alto que el texto plano anterior.
+    const panelHeight = (spec || level >= 3 ? 260 : 230) + 40;
     const gridX = Tower.gridX[eid];
     const gridY = Tower.gridY[eid];
     let px = Math.min(gridX * GRID_SIZE + GRID_SIZE + 8, GAME_WIDTH - panelWidth - 8);
@@ -1001,15 +968,17 @@ export class Game {
     catcher.on('pointerdown', () => this._closeUpgradePanel());
     this.popupLayer.addChild(catcher);
 
-    const panel = this._makePanel(panelWidth, panelHeight);
+    const panel = this._makePanel(panelWidth, panelHeight, 'parchment');
     panel.x = px;
     panel.y = py;
+
+    const textDark = 0x2a1608;
 
     const title = new PIXI.Text(`${stats.name}${spec ? ' · ' + spec.icon + ' ' + spec.name : ''}`, {
       fontFamily: FONT,
       fontSize: 16,
       fontWeight: 'bold',
-      fill: COLORS.TEXT_LIGHT,
+      fill: textDark,
       wordWrap: true,
       wordWrapWidth: panelWidth - 24,
     });
@@ -1017,15 +986,36 @@ export class Game {
     title.y = 10;
     panel.addChild(title);
 
-    const info = new PIXI.Text(
-      `Nivel ${level} / 3\nDaño: ${Tower.damage[eid].toFixed(1)}   Rango: ${Tower.range[eid].toFixed(0)}\nCadencia: ${Tower.fireRate[eid].toFixed(2)}/s`,
-      { fontFamily: FONT, fontSize: 13, fill: 0xd7c9a8, lineHeight: 18 }
-    );
-    info.x = 14;
-    info.y = 40;
-    panel.addChild(info);
+    const starsRow = new PIXI.Text('★'.repeat(level) + '☆'.repeat(3 - level), {
+      fontFamily: FONT,
+      fontSize: 16,
+      fill: PALETTE.gold,
+    });
+    starsRow.x = 14;
+    starsRow.y = 36;
+    panel.addChild(starsRow);
 
-    let y = 100;
+    // Barras de estadísticas visuales en vez de números crudos.
+    const statRows = [
+      { label: 'Daño', value: Tower.damage[eid], max: 140, color: 0xd32f2f },
+      { label: 'Rango', value: Tower.range[eid], max: 340, color: 0x64b5f6 },
+      { label: 'Cadencia', value: Tower.fireRate[eid], max: 3.5, color: 0xffb300 },
+    ];
+    let barY = 62;
+    for (const row of statRows) {
+      const lbl = new PIXI.Text(row.label, { fontFamily: FONT, fontSize: 12, fill: textDark });
+      lbl.x = 14;
+      lbl.y = barY + 1;
+      panel.addChild(lbl);
+      const bar = makeStatBar(panelWidth - 88, 12, row.color);
+      bar.x = 84;
+      bar.y = barY;
+      bar.setPct(row.value / row.max);
+      panel.addChild(bar);
+      barY += 20;
+    }
+
+    let y = barY + 12;
 
     if (level < 3) {
       const cost = getUpgradeCost(level + 1);
@@ -1141,18 +1131,58 @@ export class Game {
   // ─────────────────────────────────────────── HUD / persistencia ───────────────────────────────────────────
 
   _updateHUD() {
-    this.goldText.text = `🪙 Oro: ${this.gold}`;
-    this.livesText.text = `❤️ Vidas: ${this.lives}`;
+    const goldIncreased = this.gold > this._displayedGold;
+    this._animateNumber(this.goldText, this._displayedGold, this.gold);
+    if (goldIncreased) this._pulseIcon(this.goldIcon);
+    this._displayedGold = this.gold;
+
+    if (this.lives < this._displayedLives) this._pulseIcon(this.heartIcon, 1.5, 0xff5252);
+    this._animateNumber(this.livesText, this._displayedLives, this.lives);
+    this._displayedLives = this.lives;
+
     const totalWaves = wavesData.waves.length;
     this.waveText.text = this.endless
       ? `Oleada ${this.currentWave} · Sin fin +${this.endlessWave}`
       : `Oleada ${this.currentWave} / ${totalWaves}`;
   }
 
+  /** Anima un texto numérico contando desde `from` hasta `to` (Fase 3). */
+  _animateNumber(textObj, from, to, duration = 350) {
+    if (from === to) {
+      textObj.text = String(to);
+      return;
+    }
+    const start = performance.now();
+    const step = () => {
+      const t = Math.min(1, (performance.now() - start) / duration);
+      textObj.text = String(Math.round(from + (to - from) * t));
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  /** Destello/"pop" de un icono del HUD (moneda al ganar oro, corazón al perder vida). */
+  _pulseIcon(sprite, scaleTo = 1.4, tintFlash = null) {
+    const start = performance.now();
+    const duration = 260;
+    const originalTint = sprite.tint;
+    const baseScale = sprite.baseScale ?? sprite.scale.x;
+    sprite.baseScale = baseScale;
+    const step = () => {
+      const t = Math.min(1, (performance.now() - start) / duration);
+      const bump = Math.sin(t * Math.PI);
+      sprite.scale.set(baseScale * (1 + bump * (scaleTo - 1)));
+      if (tintFlash) sprite.tint = t < 1 ? tintFlash : originalTint;
+      if (t < 1) requestAnimationFrame(step);
+      else sprite.scale.set(baseScale);
+    };
+    requestAnimationFrame(step);
+  }
+
   _toggleMute() {
     this._muted = !this._muted;
     this.sound.setMuted(this._muted);
-    this.muteButton.children[1].text = this._muted ? '🔇' : '🔊';
+    this.muteButton.labelText.text = this._muted ? '🔇' : '🔊';
   }
 
   _saveGame() {
