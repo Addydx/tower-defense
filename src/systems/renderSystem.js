@@ -89,6 +89,10 @@ function renderTowers(world, dt, elapsedTime) {
     const lvlScale = (sprite.levelScale ?? 1) * breathe;
     sprite.base.scale.set(lvlScale);
 
+    // Sombra/luz cenital: leve desplazamiento para sugerir una fuente de luz que se mueve (Fase 5).
+    if (sprite.shadow) sprite.shadow.x = Math.sin(elapsedTime * 0.6 + sprite.idlePhase) * 3;
+    if (sprite.glow) sprite.glow.alpha = 0.85 + Math.sin(elapsedTime * 1.5 + sprite.idlePhase) * 0.15;
+
     const turretY = sprite.turretOffsetY ?? -30;
     const bob = Math.sin(elapsedTime * 2 + sprite.idlePhase) * 2;
     sprite.turret.y = turretY + bob;
