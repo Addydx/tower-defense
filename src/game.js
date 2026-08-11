@@ -937,7 +937,9 @@ export class Game {
     const sprite = Renderable.sprite[eid];
     sprite.eventMode = 'static';
     sprite.cursor = 'pointer';
-    sprite.hitArea = new PIXI.Rectangle(-24, -24, 48, 48);
+    // Área de clic ampliada hacia arriba: las torres más altas/especializadas
+    // (Fase 1) dibujan su estructura muy por encima del cuadro de la celda.
+    sprite.hitArea = new PIXI.Rectangle(-24, -95, 48, 119);
     sprite.on('pointerdown', (e) => {
       e.stopPropagation();
       this._onTowerClick(eid);
