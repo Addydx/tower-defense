@@ -481,7 +481,7 @@ function seededScatter(pc, count, colorFn, rng) {
   }
 }
 
-function mulberry32(seed) {
+export function mulberry32(seed) {
   let a = seed;
   return function () {
     a |= 0;

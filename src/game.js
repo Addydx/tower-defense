@@ -22,6 +22,7 @@ import wavesData from './data/waves.json';
 
 import { getTowerBaseTexture, getTowerTurretTexture } from './rendering/textures.js';
 import { drawGlow } from './rendering/effects.js';
+import { buildMapVisuals } from './rendering/mapRenderer.js';
 
 import { buildWaypoints } from './systems/pathSystem.js';
 import { updateMovement } from './systems/movementSystem.js';
@@ -79,7 +80,9 @@ export class Game {
   // ─────────────────────────────────────────── Setup ───────────────────────────────────────────
 
   _buildLayers() {
+    this.backgroundLayer = new PIXI.Container();
     this.mapLayer = new PIXI.Container();
+    this.decorationLayer = new PIXI.Container();
     this.towerLayer = new PIXI.Container();
     this.enemyLayer = new PIXI.Container();
     this.projectileLayer = new PIXI.Container();
@@ -90,7 +93,9 @@ export class Game {
     this.menuLayer = new PIXI.Container();
 
     this.app.stage.addChild(
+      this.backgroundLayer,
       this.mapLayer,
+      this.decorationLayer,
       this.towerLayer,
       this.enemyLayer,
       this.projectileLayer,
@@ -103,41 +108,31 @@ export class Game {
   }
 
   _drawMap() {
-    const { tiles, cols, rows } = mapData;
+    this.mapVisuals = buildMapVisuals(
+      { backgroundLayer: this.backgroundLayer, mapLayer: this.mapLayer, decorationLayer: this.decorationLayer },
+      mapData
+    );
 
+    const { cols, rows } = mapData;
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
-        const type = tiles[row][col];
-        const x = col * GRID_SIZE;
-        const y = row * GRID_SIZE;
+        if (mapData.tiles[row][col] !== TILE_TYPES.BUILDABLE) continue;
+        const g = this.mapVisuals.tileSprites[row][col];
+        const hoverBorder = new PIXI.Graphics();
+        hoverBorder.lineStyle(3, COLORS.UI_PANEL_BORDER, 0.95);
+        hoverBorder.drawRect(1.5, 1.5, GRID_SIZE - 3, GRID_SIZE - 3);
+        hoverBorder.visible = false;
+        g.addChild(hoverBorder);
 
-        const g = new PIXI.Graphics();
-        let fill = COLORS.BUILDABLE;
-        if (type === TILE_TYPES.PATH) fill = COLORS.PATH;
-        else if (type === TILE_TYPES.START) fill = COLORS.START;
-        else if (type === TILE_TYPES.END) fill = COLORS.END;
-        else if ((row + col) % 2 === 0) fill = COLORS.BUILDABLE_ALT;
-
-        g.beginFill(fill);
-        g.drawRect(0, 0, GRID_SIZE, GRID_SIZE);
-        g.endFill();
-        g.lineStyle(1, 0x000000, 0.15);
-        g.drawRect(0, 0, GRID_SIZE, GRID_SIZE);
-        g.x = x;
-        g.y = y;
-        this.mapLayer.addChild(g);
-
-        if (type === TILE_TYPES.BUILDABLE) {
-          g.eventMode = 'static';
-          g.cursor = 'pointer';
-          g.on('pointerdown', () => this._onTileClick(col, row));
-          g.on('pointerover', () => {
-            if (this._isBuildable(col, row)) g.alpha = 0.75;
-          });
-          g.on('pointerout', () => {
-            g.alpha = 1;
-          });
-        }
+        g.eventMode = 'static';
+        g.cursor = 'pointer';
+        g.on('pointerdown', () => this._onTileClick(col, row));
+        g.on('pointerover', () => {
+          if (this._isBuildable(col, row)) hoverBorder.visible = true;
+        });
+        g.on('pointerout', () => {
+          hoverBorder.visible = false;
+        });
       }
     }
   }
@@ -586,6 +581,7 @@ export class Game {
     if (this.state !== 'playing') return;
 
     this.elapsedTime += delta;
+    this.mapVisuals.update(delta, this.elapsedTime);
     this._updateSpawning(delta);
 
     const escaped = updateMovement(this.world, this.waypoints, delta);
