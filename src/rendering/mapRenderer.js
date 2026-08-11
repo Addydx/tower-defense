@@ -92,11 +92,32 @@ function buildBackground(backgroundLayer) {
     clouds.push(c);
   }
 
+  // Polvo dorado flotando muy lento (ambiente) — unas pocas motas persistentes y baratas.
+  const motes = [];
+  for (let i = 0; i < 14; i++) {
+    const m = new PIXI.Graphics();
+    m.beginFill(PALETTE.gold, 0.35);
+    m.drawCircle(0, 0, 1.4);
+    m.endFill();
+    m.x = rng() * GAME_WIDTH;
+    m.y = rng() * GAME_HEIGHT;
+    m.driftPhase = rng() * Math.PI * 2;
+    m.speed = 4 + rng() * 5;
+    backgroundLayer.addChild(m);
+    motes.push(m);
+  }
+
   return {
     update(dt) {
       for (const c of clouds) {
         c.x += c.speed * dt;
         if (c.x > GAME_WIDTH + 40) c.x = -40;
+      }
+      for (const m of motes) {
+        m.driftPhase += dt * 0.6;
+        m.x += Math.sin(m.driftPhase) * 6 * dt;
+        m.y -= m.speed * dt;
+        if (m.y < -4) m.y = GAME_HEIGHT + 4;
       }
     },
   };

@@ -560,6 +560,7 @@ export class Game {
       projectileLayer: this.projectileLayer,
       projectileEffects: this.projectileEffects,
       onShoot: (towerTypeName) => this.sound.playShoot(towerTypeName),
+      onFlame: (x, y, angle) => this.particles.flameCone(x, y, angle),
     });
 
     updateProjectiles(this.world, delta, {
@@ -603,6 +604,7 @@ export class Game {
         const amount = Math.max(1, Math.round(Poison.dps[eid] * 0.5));
         this.particles.floatingText(Position.x[eid], Position.y[eid] - 20, `-${amount}`, 0x81c784);
       }
+      if (Math.random() < 0.2) this.particles.poisonBubble(Position.x[eid], Position.y[eid] - 10);
     }
   }
 
@@ -866,6 +868,7 @@ export class Game {
     this._attachTowerInteraction(eid);
 
     this.sound.playBuild();
+    this.particles.constructionDust(Position.x[eid], Position.y[eid]);
     this._updateHUD();
     this._closeBuildMenu();
   }

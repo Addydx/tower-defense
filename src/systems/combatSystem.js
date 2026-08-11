@@ -39,7 +39,7 @@ export function acquireTarget(world, towerEid) {
  * (splash, veneno, congelación...) para que projectileSystem la use al
  * impactar.
  */
-export function updateTowers(world, { dt, time, projectileLayer, projectileEffects, onShoot }) {
+export function updateTowers(world, { dt, time, projectileLayer, projectileEffects, onShoot, onFlame }) {
   const towers = query(world, [Position, Tower]);
 
   for (const eid of towers) {
@@ -52,6 +52,7 @@ export function updateTowers(world, { dt, time, projectileLayer, projectileEffec
       if (target !== null) {
         const angle = Math.atan2(Position.y[target] - Position.y[eid], Position.x[target] - Position.x[eid]);
         applyConeDamage(world, eid, angle, spec, dt);
+        onFlame?.(Position.x[eid], Position.y[eid], angle);
       }
       continue;
     }
