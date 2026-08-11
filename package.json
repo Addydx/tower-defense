@@ -1,0 +1,22 @@
+{
+  "name": "tower-defense",
+  "version": "1.0.0",
+  "description": "Tower Defense en el navegador con PixiJS y bitECS",
+  "type": "module",
+  "main": "src/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bitecs": "^0.4.0",
+    "pixi.js": "^7.4.3"
+  },
+  "devDependencies": {
+    "vite": "^8.2.1"
+  }
+}

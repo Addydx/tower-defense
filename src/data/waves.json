@@ -1,0 +1,448 @@
+{
+  "waves": [
+    {
+      "enemies": [
+        {
+          "type": "normal",
+          "delay": 0
+        },
+        {
+          "type": "normal",
+          "delay": 1
+        },
+        {
+          "type": "normal",
+          "delay": 1
+        },
+        {
+          "type": "normal",
+          "delay": 1
+        },
+        {
+          "type": "normal",
+          "delay": 1
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "normal",
+          "delay": 0
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "normal",
+          "delay": 0
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "fast",
+          "delay": 1
+        },
+        {
+          "type": "fast",
+          "delay": 0.6
+        },
+        {
+          "type": "fast",
+          "delay": 0.6
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "normal",
+          "delay": 0
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 0.5
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "normal",
+          "delay": 0
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "normal",
+          "delay": 0.8
+        },
+        {
+          "type": "boss",
+          "delay": 1.5
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "fast",
+          "delay": 0
+        },
+        {
+          "type": "fast",
+          "delay": 0.5
+        },
+        {
+          "type": "fast",
+          "delay": 0.5
+        },
+        {
+          "type": "fast",
+          "delay": 0.5
+        },
+        {
+          "type": "fast",
+          "delay": 0.5
+        },
+        {
+          "type": "fast",
+          "delay": 0.5
+        },
+        {
+          "type": "fast",
+          "delay": 0.5
+        },
+        {
+          "type": "fast",
+          "delay": 0.5
+        },
+        {
+          "type": "normal",
+          "delay": 1
+        },
+        {
+          "type": "normal",
+          "delay": 0.7
+        },
+        {
+          "type": "normal",
+          "delay": 0.7
+        },
+        {
+          "type": "normal",
+          "delay": 0.7
+        },
+        {
+          "type": "normal",
+          "delay": 0.7
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "tank",
+          "delay": 0
+        },
+        {
+          "type": "tank",
+          "delay": 1.2
+        },
+        {
+          "type": "tank",
+          "delay": 1.2
+        },
+        {
+          "type": "tank",
+          "delay": 1.2
+        },
+        {
+          "type": "tank",
+          "delay": 1.2
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "fast",
+          "delay": 0
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "tank",
+          "delay": 1.2
+        },
+        {
+          "type": "tank",
+          "delay": 1
+        },
+        {
+          "type": "tank",
+          "delay": 1
+        },
+        {
+          "type": "tank",
+          "delay": 1
+        },
+        {
+          "type": "tank",
+          "delay": 1
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "normal",
+          "delay": 0
+        },
+        {
+          "type": "fast",
+          "delay": 0.6
+        },
+        {
+          "type": "normal",
+          "delay": 0.6
+        },
+        {
+          "type": "tank",
+          "delay": 0.6
+        },
+        {
+          "type": "fast",
+          "delay": 0.6
+        },
+        {
+          "type": "normal",
+          "delay": 0.6
+        },
+        {
+          "type": "fast",
+          "delay": 0.6
+        },
+        {
+          "type": "tank",
+          "delay": 0.6
+        },
+        {
+          "type": "normal",
+          "delay": 0.6
+        },
+        {
+          "type": "fast",
+          "delay": 0.6
+        },
+        {
+          "type": "tank",
+          "delay": 0.6
+        },
+        {
+          "type": "normal",
+          "delay": 0.6
+        },
+        {
+          "type": "fast",
+          "delay": 0.6
+        },
+        {
+          "type": "fast",
+          "delay": 0.6
+        },
+        {
+          "type": "tank",
+          "delay": 0.6
+        }
+      ]
+    },
+    {
+      "enemies": [
+        {
+          "type": "fast",
+          "delay": 0
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "fast",
+          "delay": 0.4
+        },
+        {
+          "type": "tank",
+          "delay": 1
+        },
+        {
+          "type": "tank",
+          "delay": 0.9
+        },
+        {
+          "type": "tank",
+          "delay": 0.9
+        },
+        {
+          "type": "tank",
+          "delay": 0.9
+        },
+        {
+          "type": "tank",
+          "delay": 0.9
+        },
+        {
+          "type": "megaboss",
+          "delay": 2
+        }
+      ]
+    }
+  ]
+}
