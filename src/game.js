@@ -20,7 +20,7 @@ import { Position, Enemy, Tower, Renderable, Slow, Poison } from './components.j
 import mapData from './data/map.json';
 import wavesData from './data/waves.json';
 
-import { getTowerBaseTexture, getTowerTurretTexture } from './rendering/textures.js';
+import { getTowerBaseTexture, getTowerTurretTexture, getTileTexture } from './rendering/textures.js';
 import { drawGlow } from './rendering/effects.js';
 import { buildMapVisuals } from './rendering/mapRenderer.js';
 import { makePixelPanel, makePixelButton, makeIcon, makeStatBar } from './rendering/uiRenderer.js';
@@ -387,6 +387,13 @@ export class Game {
     this.endScreenContainer.addChild(bg);
     this.endScreenContainer.visible = false;
 
+    this.endCastle = new PIXI.Sprite(getTileTexture('end'));
+    this.endCastle.anchor.set(0.5);
+    this.endCastle.scale.set(3);
+    this.endCastle.x = GAME_WIDTH / 2;
+    this.endCastle.y = 230;
+    this.endScreenContainer.addChild(this.endCastle);
+
     this.endTitle = new PIXI.Text('', {
       fontFamily: FONT,
       fontSize: 56,
@@ -399,7 +406,7 @@ export class Game {
     });
     this.endTitle.anchor.set(0.5);
     this.endTitle.x = GAME_WIDTH / 2;
-    this.endTitle.y = 160;
+    this.endTitle.y = 66;
     this.endScreenContainer.addChild(this.endTitle);
 
     this.endStats = new PIXI.Text('', {
@@ -411,12 +418,12 @@ export class Game {
     });
     this.endStats.anchor.set(0.5);
     this.endStats.x = GAME_WIDTH / 2;
-    this.endStats.y = 280;
+    this.endStats.y = 336;
     this.endScreenContainer.addChild(this.endStats);
 
     this.endButtonsGroup = new PIXI.Container();
     this.endButtonsGroup.x = GAME_WIDTH / 2 - 130;
-    this.endButtonsGroup.y = 400;
+    this.endButtonsGroup.y = 430;
     this.endScreenContainer.addChild(this.endButtonsGroup);
 
     this.menuLayer.addChild(this.endScreenContainer);
@@ -440,6 +447,21 @@ export class Game {
       `Enemigos eliminados: ${this.killCount}\n` +
       `Vidas restantes: ${this.lives}   Oro restante: ${this.gold}\n` +
       `Puntuación: ${score}`;
+
+    // Castillo en pie con fuegos artificiales (victoria) o en ruinas (derrota).
+    this.endCastle.tint = won ? 0xffffff : 0x6a5548;
+    this.endCastle.rotation = won ? 0 : -0.06;
+    if (this._endFireworksTimer) clearInterval(this._endFireworksTimer);
+    if (won) {
+      let bursts = 0;
+      this._endFireworksTimer = setInterval(() => {
+        const x = 120 + Math.random() * (GAME_WIDTH - 240);
+        const y = 80 + Math.random() * 160;
+        this._spawnFirework(x, y);
+        bursts += 1;
+        if (bursts >= 8) clearInterval(this._endFireworksTimer);
+      }, 220);
+    }
 
     this.endButtonsGroup.removeChildren();
     if (won) {
@@ -778,6 +800,44 @@ export class Game {
       } else {
         sprite.parent?.removeChild(sprite);
         sprite.destroy?.();
+      }
+    };
+    requestAnimationFrame(step);
+  }
+
+  /** Pequeño estallido de fuegos artificiales pixel art para la pantalla de victoria. */
+  _spawnFirework(x, y) {
+    const colors = [PALETTE.gold, PALETTE.fireRed, PALETTE.iceLight, PALETTE.greenLight];
+    const count = 10;
+    const sparks = [];
+    for (let i = 0; i < count; i++) {
+      const g = new PIXI.Graphics();
+      const color = colors[i % colors.length];
+      g.beginFill(color);
+      g.drawRect(-2, -2, 4, 4);
+      g.endFill();
+      g.x = x;
+      g.y = y;
+      this.endScreenContainer.addChild(g);
+      const angle = (i / count) * Math.PI * 2;
+      sparks.push({ sprite: g, vx: Math.cos(angle) * 90, vy: Math.sin(angle) * 90 });
+    }
+    const duration = 550;
+    const start = performance.now();
+    const step = () => {
+      const t = Math.min(1, (performance.now() - start) / duration);
+      for (const s of sparks) {
+        s.sprite.x += s.vx * 0.016;
+        s.sprite.y += s.vy * 0.016 + t * 2;
+        s.sprite.alpha = 1 - t;
+      }
+      if (t < 1) {
+        requestAnimationFrame(step);
+      } else {
+        for (const s of sparks) {
+          s.sprite.parent?.removeChild(s.sprite);
+          s.sprite.destroy();
+        }
       }
     };
     requestAnimationFrame(step);
