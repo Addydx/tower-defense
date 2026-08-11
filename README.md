@@ -1,5 +1,7 @@
 # 🗼 Tower Defense
 
+**[▶ Jugar online](https://addydx.github.io/tower-defense/)**
+
 Tower Defense pixel art en el navegador, hecho con **PixiJS 7** (render 2D) y **bitECS** (arquitectura Entity-Component-System). Todos los sprites, tiles, iconos y efectos se generan proceduralmente con Canvas 2D — no hay imágenes ni spritesheets externas.
 
 ## Requisitos
