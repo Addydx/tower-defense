@@ -36,7 +36,10 @@ resize();
 const game = new Game(app);
 game.init();
 
-app.ticker.add((ticker) => {
-  const delta = ticker.deltaMS / 1000;
+// PixiJS 7 invoca los listeners de ticker.add() con el número de deltaTime
+// (no con la instancia de Ticker), así que el tiempo transcurrido real se
+// lee de app.ticker.deltaMS directamente en vez del argumento del callback.
+app.ticker.add(() => {
+  const delta = app.ticker.deltaMS / 1000;
   game.update(delta);
 });
